@@ -1,0 +1,9 @@
+# Byte-compiled files
+*.pyc
+*.pyo
+__pycache__/
+
+venv/
+.env
+.vscode/*
+.DS_Store
