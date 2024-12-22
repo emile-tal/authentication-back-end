@@ -19,3 +19,4 @@ def get_db_conn():
 
 def close_db_conn(conn=None):
     conn.close
+    

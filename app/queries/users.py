@@ -1,15 +1,16 @@
 from hashlib import sha256
 from app.database import get_db_conn, close_db_conn
 
-# TO DO add salt to hashing
+# TO DO add salt to hashing password
+# TO DO turn psycopg fetch into dictionary rather than tuple
 
 def loginUser(email, password):
     conn = get_db_conn()
     with conn.cursor() as cur:
-        retrieve_password_query = "SELECT password FROM users WHERE email = %s"
-        cur.execute(retrieve_password_query, email)
-        saved_password = cur.fetchone()
-        if sha256(password.encode('utf-8')).hexdigest() == saved_password:
+        retrieve_password_query = "SELECT * FROM users WHERE email = %s"
+        cur.execute(retrieve_password_query, (email,))
+        user = cur.fetchone()
+        if sha256(password.encode('utf-8')).hexdigest() == user[2]:
             print('success')
     close_db_conn(conn)
 
