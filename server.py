@@ -1,7 +1,9 @@
-from flask import Flask, request
+from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from app.queries.users import registerUser, loginUser
+from app.authentication import create_session
+
 
 load_dotenv()
 
@@ -14,9 +16,11 @@ def login():
     data = request.get_json()
     email = data['email']
     password = data['password']
-    loginUser(email, password)
-    print("Login successful")
-    return 'Success'
+    if loginUser(email, password):
+        session_cookie = create_session(email)
+        response = make_response(jsonify({'message': "Successful log in"}))
+        response.set_cookie(session_cookie)
+    return response
 
 @app.route('/register', methods=['POST'])
 def register():
