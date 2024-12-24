@@ -1,7 +1,7 @@
 from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from app.queries.users import registerUser, loginUser
+from app.queries.users import register_user, login_user
 from app.authentication import create_session
 
 
@@ -18,13 +18,13 @@ def login():
     data = request.get_json()
     email = data['email']
     password = data['password']
-    user_id = loginUser(email, password)
+    user_id = login_user(email, password)
     if user_id is not None:
         session_cookie = create_session(user_id)
-        response = make_response(jsonify({'message': "Successful log in"}))
+        response = make_response(jsonify({'message': "User logged in successfully"}), 200)
         response.set_cookie(session_cookie)
-        return response
-    response = make_response(jsonify({'message': 'Username or password incorrect'}))
+    else:
+        response = make_response(jsonify({'message': 'Username or password incorrect'}), 401)
     return response
 
 @app.route('/register', methods=['POST'])
@@ -32,9 +32,9 @@ def register():
     data = request.get_json()
     email = data['email']
     password = data['password']
-    user_id = registerUser(email, password)
+    user_id = register_user(email, password)
     session_cookie = create_session(user_id)
-    response = make_response(jsonify({'message': "Successful log in"}))
+    response = make_response(jsonify({'message': "User regsitered successfully"}), 201)
     response.set_cookie(session_cookie)
     return response
   
