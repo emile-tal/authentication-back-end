@@ -9,6 +9,8 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=['http://localhost:5173'])
+
+# TO DO validate email/password (characters/length) frontend backend
     
 
 @app.route('/login', methods=['POST'])
@@ -16,10 +18,13 @@ def login():
     data = request.get_json()
     email = data['email']
     password = data['password']
-    if loginUser(email, password):
-        session_cookie = create_session(email)
+    user_id = loginUser(email, password)
+    if user_id is not None:
+        session_cookie = create_session(user_id)
         response = make_response(jsonify({'message': "Successful log in"}))
         response.set_cookie(session_cookie)
+        return response
+    response = make_response(jsonify({'message': 'Username or password incorrect'}))
     return response
 
 @app.route('/register', methods=['POST'])
@@ -27,7 +32,9 @@ def register():
     data = request.get_json()
     email = data['email']
     password = data['password']
-    registerUser(email, password)
-    print("Register successful")
-    return 'Success'
+    user_id = registerUser(email, password)
+    session_cookie = create_session(user_id)
+    response = make_response(jsonify({'message': "Successful log in"}))
+    response.set_cookie(session_cookie)
+    return response
   
