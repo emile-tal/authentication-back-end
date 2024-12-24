@@ -1,17 +1,14 @@
 from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from app.queries.users import register_user, login_user
-from app.authentication import create_session
+from app.queries.users import register_user, login_user, is_email_unique
+from app.authentication import create_session, is_email_valid
 
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=['http://localhost:5173'])
-
-# TO DO validate email/password (characters/length) frontend backend
-    
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -32,9 +29,16 @@ def register():
     data = request.get_json()
     email = data['email']
     password = data['password']
-    user_id = register_user(email, password)
-    session_cookie = create_session(user_id)
-    response = make_response(jsonify({'message': "User regsitered successfully"}), 201)
-    response.set_cookie(session_cookie)
+    if len(password) < 8:
+        response = make_response(jsonify({'message': 'Password length too short'}), 400)
+    elif is_email_valid(email) is None:
+        response = make_response(jsonify({'message': 'Email is invalid'}), 400)
+    elif not is_email_unique(email):
+        response = make_response(jsonify({'message': 'Email is already registered'}), 400)
+    else:
+        user_id = register_user(email, password)
+        session_cookie = create_session(user_id)
+        response = make_response(jsonify({'message': "User regsitered successfully"}), 201)
+        response.set_cookie(session_cookie)
     return response
   

@@ -3,6 +3,7 @@ import secrets
 import hmac
 import hashlib
 import base64
+import re
 from time import time
 from datetime import datetime
 from dotenv import load_dotenv
@@ -42,10 +43,18 @@ def validate_session(session_cookie):
         with conn.cursor() as cur:
             current_time = datetime.fromtimestamp(time())
             get_sessions_query = "SELECT * FROM sessions WHERE (expires_at) > %s AND (session_id) = %s"
-            cur.execute(get_sessions_query, current_time, session_id)
+            cur.execute(get_sessions_query, (current_time, session_id))
             valid_session = cur.fetchone()
             if valid_session is not None:
+                expiry_time = time() + 3600
+                expiry_time_formatted = datetime.fromtimestamp(expiry_time)
+                update_expiry_query = "UPDATE sessions SET (expires_at) = %s WHERE (session_id) = %s"
+                cur.execute(update_expiry_query, (expiry_time_formatted, session_id))
                 return valid_session['user_id']
     except Exception:
         pass
     return None
+
+def is_email_valid(email):
+    email_regex_pattern = r"^(?!\.)(?!.*\.\.)[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+"r"@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$"
+    return re.fullmatch(email_regex_pattern, email)

@@ -17,7 +17,7 @@ def get_db_conn():
         conn.row_factory = psycopg.rows.dict_row
         return conn
     except Exception as err:
-        print(f'There is an error: {err}')
+        print(f'Error connecting to database: {err}')
 
 def close_db_conn(conn=None):
     conn.close
