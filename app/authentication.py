@@ -17,19 +17,23 @@ encryption_key = os.environ["ENCRYPTION_KEY"].encode()
 cipher = Fernet(encryption_key)
 
 def create_session(user_id):
-    session_id = secrets.token_hex(32)
-    session_encrypted = cipher.encrypt(session_id.encode())
-    signature = hmac.new(signing_key, session_encrypted, hashlib.sha256).digest()
-    signed_cookie = base64.b64encode(session_encrypted + b"." + signature).decode()
-    expiry_time = time() + 3600
-    expiry_time_formatted = datetime.fromtimestamp(expiry_time)
-    conn = get_db_conn()
-    with conn.cursor() as cur:
-        insert_session_query = "INSERT INTO sessions (session_id, user_id, expires_at) VALUES (%s, %s, %s)"
-        cur.execute(insert_session_query, (session_id, user_id, expiry_time_formatted))
-        conn.commit()
-        close_db_conn(conn)
-    return signed_cookie
+    try:
+        session_id = secrets.token_hex(32)
+        session_encrypted = cipher.encrypt(session_id.encode())
+        signature = hmac.new(signing_key, session_encrypted, hashlib.sha256).digest()
+        signed_cookie = base64.b64encode(session_encrypted + b"." + signature).decode()
+        expiry_time = time() + 3600
+        expiry_time_formatted = datetime.fromtimestamp(expiry_time)
+        conn = get_db_conn()
+        with conn.cursor() as cur:
+            insert_session_query = "INSERT INTO sessions (session_id, user_id, expires_at) VALUES (%s, %s, %s)"
+            cur.execute(insert_session_query, (session_id, user_id, expiry_time_formatted))
+            conn.commit()
+            close_db_conn(conn)
+        return signed_cookie
+    except Exception as err:
+        print(f"Error creating session: {err}")
+        return None
 
 def validate_session(session_cookie):
     try:
@@ -51,9 +55,9 @@ def validate_session(session_cookie):
                 update_expiry_query = "UPDATE sessions SET (expires_at) = %s WHERE (session_id) = %s"
                 cur.execute(update_expiry_query, (expiry_time_formatted, session_id))
                 return valid_session['user_id']
-    except Exception:
-        pass
-    return None
+    except Exception as err:
+        print(f"Error validating session: {err}")
+        return None
 
 def is_email_valid(email):
     email_regex_pattern = r"^(?!\.)(?!.*\.\.)[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+"r"@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$"
