@@ -58,3 +58,6 @@ def get_user():
             response = make_response(jsonify({'name': user_name}), 200)
             response.set_cookie(session_cookie)
     return response
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=os.environ['PORT'] if os.environ['PORT'] is not None else 8080)
