@@ -9,9 +9,9 @@ def login_user(email, password):
             .eq("email", email)
             .execute()
         )
-        if len(user["data"][0]) > 0:
-            if sha256(password.encode('utf-8')).hexdigest() == user['data'][0]["password"]:
-                return user['data'][0]["id"]
+        if len(user.data) > 0:
+            if sha256(password.encode('utf-8')).hexdigest() == user.data[0]["password"]:
+                return user.data[0]["id"]
         return None
     except Exception as err:
         print(f'Error logging in: {err}')
@@ -25,7 +25,7 @@ def register_user(email, password, first_name, last_name):
             .insert({"first_name": first_name, "last_name": last_name, "email": email, "password": hashed_password})
             .execute()
         )
-        return user["data"][0]["id"]
+        return user.data[0]["id"]
     except Exception as err:
         print(f"Error registering user: {err}")
         return None
@@ -38,7 +38,7 @@ def get_user_name(id):
             .eq("id", id)
             .execute()
         )
-        return user["data"][0]["first_name"]
+        return user.data[0]["first_name"]
     except Exception as err:
         print(f"Error retrieving user's name: {err}")
         return None

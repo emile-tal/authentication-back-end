@@ -24,15 +24,14 @@ def create_session(user_id):
         signed_cookie = base64.b64encode(session_encrypted + b"." + signature).decode()
         expiry_time = time() + 3600
         expiry_time_formatted = datetime.fromtimestamp(expiry_time)
-        print(session_id, user_id, expiry_time_formatted)
         response = (
             supabase.table("sessions")
-            .insert({"session_id": session_id, "user_id": user_id, "expires_at": expiry_time_formatted})
+            .insert({"session_id": session_id, "user_id": user_id, "expires_at": str(expiry_time_formatted)})
             .execute()
             )
         return signed_cookie
     except Exception as err:
-        print(f"Error creating session: {err}")
+        (f"Error creating session: {err}")
         return None
 
 def validate_session(session_cookie):
@@ -51,18 +50,18 @@ def validate_session(session_cookie):
             .gt("expires_at", current_time)
             .execute()
         )
-        if len(valid_session[data]) > 0:
+        if len(valid_session.data) > 0:
             expiry_time = time() + 3600
             expiry_time_formatted = datetime.fromtimestamp(expiry_time)
             response = (
                 supabase.table("sessions")
-                .update({"expires_at", expiry_time_formatted})
+                .update({"expires_at", str(expiry_time_formatted)})
                 .eq("session_id", session_id)
                 .execute()
             )
-            return valid_session["data"][0]["user_id"]
+            return valid_session.data[0]["user_id"]
     except Exception as err:
-        print(f"Error validating session: {err}")
+        (f"Error validating session: {err}")
         return None
 
 def is_email_valid(email):
