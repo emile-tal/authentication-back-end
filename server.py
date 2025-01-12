@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from app.queries.users import register_user, login_user, is_email_unique, get_user_name
+from app.users import register_user, login_user, get_user_name
 from app.authentication import create_session, validate_session, is_email_valid
 
 
@@ -34,8 +34,6 @@ def register():
         response = make_response(jsonify({'message': 'Password length too short'}), 400)
     elif is_email_valid(email) is None:
         response = make_response(jsonify({'message': 'Email is invalid'}), 400)
-    elif not is_email_unique(email):
-        response = make_response(jsonify({'message': 'Email is already registered'}), 400)
     else:
         user_id = register_user(email, password, data['first_name'], data['last_name'])
         session_cookie = create_session(user_id)

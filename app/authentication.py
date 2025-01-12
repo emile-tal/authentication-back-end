@@ -8,7 +8,7 @@ from time import time
 from datetime import datetime
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
-from app.database import get_db_conn, close_db_conn
+from app.database import supabase
 
 load_dotenv()
 
@@ -24,12 +24,12 @@ def create_session(user_id):
         signed_cookie = base64.b64encode(session_encrypted + b"." + signature).decode()
         expiry_time = time() + 3600
         expiry_time_formatted = datetime.fromtimestamp(expiry_time)
-        conn = get_db_conn()
-        with conn.cursor() as cur:
-            insert_session_query = "INSERT INTO sessions (session_id, user_id, expires_at) VALUES (%s, %s, %s)"
-            cur.execute(insert_session_query, (session_id, user_id, expiry_time_formatted))
-            conn.commit()
-            close_db_conn(conn)
+        print(session_id, user_id, expiry_time_formatted)
+        response = (
+            supabase.table("sessions")
+            .insert({"session_id": session_id, "user_id": user_id, "expires_at": expiry_time_formatted})
+            .execute()
+            )
         return signed_cookie
     except Exception as err:
         print(f"Error creating session: {err}")
@@ -43,18 +43,24 @@ def validate_session(session_cookie):
         if not hmac.compare_digest(expected_signature, signature):
             return None
         session_id = cipher.decrypt(session_encrypted).decode()
-        conn = get_db_conn()
-        with conn.cursor() as cur:
-            current_time = datetime.fromtimestamp(time())
-            get_sessions_query = "SELECT * FROM sessions WHERE (expires_at) > %s AND (session_id) = %s"
-            cur.execute(get_sessions_query, (current_time, session_id))
-            valid_session = cur.fetchone()
-            if valid_session is not None:
-                expiry_time = time() + 3600
-                expiry_time_formatted = datetime.fromtimestamp(expiry_time)
-                update_expiry_query = "UPDATE sessions SET (expires_at) = %s WHERE (session_id) = %s"
-                cur.execute(update_expiry_query, (expiry_time_formatted, session_id))
-                return valid_session['user_id']
+        current_time = datetime.fromtimestamp(time())
+        valid_session = (
+            supabase.table("sessions")
+            .select("*")
+            .eq("session_id", session_id)
+            .gt("expires_at", current_time)
+            .execute()
+        )
+        if len(valid_session[data]) > 0:
+            expiry_time = time() + 3600
+            expiry_time_formatted = datetime.fromtimestamp(expiry_time)
+            response = (
+                supabase.table("sessions")
+                .update({"expires_at", expiry_time_formatted})
+                .eq("session_id", session_id)
+                .execute()
+            )
+            return valid_session["data"][0]["user_id"]
     except Exception as err:
         print(f"Error validating session: {err}")
         return None
